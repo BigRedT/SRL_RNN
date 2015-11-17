@@ -1,56 +1,74 @@
 require 'rnn'
+require 'cunn'
 
--- function readData()
---    return tables
--- end
+local featIO = require('readFeatures')
+
+
+-- file paths
+local featureFile = "./pos_tag_data/feat.txt"
+local vocabFile = "./pos_tag_data/vocab.txt"
+local labelsFile = "./pos_tag_data/labels.txt"
+
+
+-- read training data
+local train_sens = featIO.readFeatureFile(featureFile)
+local id2word, word2id, vocabSize = featIO.readVocab(vocabFile) 
+local allLabels, numLabels = featIO.readLabels(labelsFile)
+
+
+-- print stats
+print('Number of training sequences: ' .. #train_sens)
+print('Vocabulary size: ' ..vocabSize)
+print('Number of labels: ' ..numLabels)
+
+
+-- extract a example feature to determine inputSize
+local exFeat = featIO.getOneHotFeature(1,vocabSize)
+print('Feature size: ' ..tostring(exFeat:size(2)))
+
 
 -- Network parameters
-numClasses = 10
-inputSize = 60
-hiddenSize = 100
-rho = 1  -- maximum number of steps to BPTT
+local numClasses = numLabels
+local inputSize = exFeat:size(2)
+local hiddenSize = 100
+local rho = 1  -- maximum number of steps to BPTT
 
 -- Define network input layer
-inputLayer = nn.TemporalConvolution(inputSize,hiddenSize,1,1)
+local inputLayer = nn.TemporalConvolution(inputSize,hiddenSize,1,1)
 
 -- Define network feedback
-feedbackLayer = nn.Linear(hiddenSize,hiddenSize)
+local feedbackLayer = nn.Linear(hiddenSize,hiddenSize)
 
 -- Define non-linear transfer layer
-transferLayer = nn.Sigmoid()
+local transferLayer = nn.Sigmoid()
 
 -- Define recurrent network
-mlp = nn.Sequential()
-mlp:add(nn.Recurrent(hiddenSize, inputLayer, feedbackLayer, transferLayer, rho))
-mlp:add(nn.Linear(hiddenSize,numClasses))
-mlp:add(nn.LogSoftMax())
---rnn = nn.Sequencer(mlp)
+local rnn = nn.Sequential()
+rnn:add(nn.Recurrent(hiddenSize, inputLayer, feedbackLayer, transferLayer, rho))
+rnn:add(nn.Linear(hiddenSize,numClasses))
+rnn:add(nn.LogSoftMax())
+rnn = rnn:cuda()
 
 -- Define criterion
-criterion = nn.ClassNLLCriterion()
+local criterion = nn.ClassNLLCriterion()
+criterion = criterion:cuda()
 
--- input i
-input = torch.rand(3,inputSize)
-target = torch.Tensor({1, 2, 3});
 
-for iter = 1,100 do
-   for i = 1,3 do -- analogous to word
-      output = mlp:forward(input[{{i},{}}])
-      -- err = criterion:forward(output, target[{i}])
-      gradOutput = criterion:backward(output,target[{i}])
-      mlp:backward(input,gradOutput)
-      mlp:backwardThroughTime()
-      mlp:updateParameters(0.1)
-      mlp:zeroGradParameters()
-      mlp:forget()
+-- Iterate over the training sentences
+for i = 1,#train_sens do
+   print(i)
+   local sentence = train_sens[i]
+   for j = 1,#sentence do 
+      local input = featIO.getOneHotFeature(sentence[j].wordId,vocabSize)
+      input = input:cuda()
+      local target = torch.Tensor{tonumber(sentence[j].label)+1}
+      target = target:cuda()
+      local output = rnn:forward(input)
+      local gradOutput = criterion:backward(output,target)
+      rnn:backward(input,gradOutput)
+      rnn:backwardThroughTime()
+      rnn:updateParameters(0.1)
+      rnn:zeroGradParameters()
+      rnn:forget()
    end
 end
-print(mlp:forward(input):exp())
-
--- Define loss function/ training criterion
---criterion = nn.SequencerCriterion(nn.ClassNLLCriterion())
-
-
-
-
-
