@@ -24,14 +24,15 @@ local function readFeatureFile(fileName)
       else
 	 local line_split = string.split(line," ")
 	 local line_info = {}
-	 line_info["wordId"] = line_split[1]
-	 line_info["label"] = line_split[2]
+	 line_info["wordId"] = tonumber(line_split[1])
+	 line_info["label"] = tonumber(line_split[2])
 	 sentence[word_id] = line_info
 	 word_id = word_id + 1
       end
    end
    return sens
 end
+
 
 local function readVocab(fileName)
    local file = io.input(fileName, "r")
@@ -41,20 +42,22 @@ local function readVocab(fileName)
 
    local id2word = {}
    local word2id = {}
-   local word_id = 0
+   local wordCount = 0
    while true do
       local line = io.read("*line")
       
       if line == nil then break end
       
       local line_split = string.split(line," ")
+      local word_id = tonumber(line_split[1])
       id2word[word_id] = line_split[2]
       word2id[line_split[2]] = word_id
-      word_id = word_id + 1
+      wordCount = wordCount + 1
    end
-   local vocabSize = word_id
+   local vocabSize = wordCount
    return id2word, word2id, vocabSize      
 end
+
 
 local function readLabels(fileName)
    local file = io.input(fileName, "r")
@@ -70,7 +73,7 @@ local function readLabels(fileName)
       if line == nil then break end
       
       local line_split = string.split(line," ")
-      labels[line_split[2]] = line_split[1]
+      labels[tonumber(line_split[2])] = line_split[1]
       numLabels = numLabels + 1
    end
    return labels, numLabels
