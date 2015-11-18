@@ -49,8 +49,8 @@ local function readVocab(fileName)
       if line == nil then break end
       
       local line_split = string.split(line," ")
-      local word_id = tonumber(line_split[1])
-      id2word[word_id] = line_split[2]
+      local word_id = tonumber(line_split[2])
+      id2word[word_id] = line_split[1]
       word2id[line_split[2]] = word_id
       wordCount = wordCount + 1
    end

@@ -10,11 +10,12 @@ local netIO = require('netIO')
 
 
 -- file paths
-local featureFile = "./pos_tag_data/feat.txt"
-local vocabFile = "./pos_tag_data/vocab.txt"
-local labelsFile = "./pos_tag_data/labels.txt"
-local modelPath = "./rnnPOS.net"
-local outputFile = "./train_pred.txt"
+-- resume from word embeddings and arguments
+local featureFile = arg[1]
+local vocabFile = arg[2]
+local labelsFile = arg[3]
+local modelPath = arg[4]
+local outputFile = arg[5]
 
 -- read training data
 local train_sens = featIO.readFeatureFile(featureFile)
@@ -37,7 +38,7 @@ print('Feature size: ' ..tostring(exFeat:size(2)))
 local numClasses = numLabels
 local inputSize = exFeat:size(2)
 local hiddenSize = 1000
-local rho = 5  -- maximum number of steps to BPTT
+local rho = 100  -- maximum number of steps to BPTT
 local max_epochs = 10
 local learning_rate = 0.01
 
@@ -71,7 +72,6 @@ for epoch = 1,max_epochs  do
       
       local sentence = train_sens[i]
       local updateCounter = 0
-      
       for j = 1,#sentence do 
 	 local input = featIO.getOneHotFeature(sentence[j].wordId,vocabSize)
 	 input = input:cuda()
@@ -81,15 +81,11 @@ for epoch = 1,max_epochs  do
 	 local gradOutput = criterion:backward(output,target)
 	 rnn:backward(input,gradOutput)
 	 updateCounter = updateCounter + 1
-
-	 -- Backpropagate after every rho time stamps
-	 if updateCounter % rho == 0 or j == #sentence then
-	    rnn:backwardThroughTime()
-	    rnn:updateParameters(learning_rate)
-	    rnn:zeroGradParameters()
-	    rnn:forget()
-	 end
       end
+      rnn:backwardThroughTime()
+      rnn:updateParameters(learning_rate)
+      rnn:zeroGradParameters()
+      rnn:forget()
    end
    torch.save(modelPath,rnn)
    netIO.genPOSTags(train_sens, rnn, id2word, vocabSize, allLabels, outputFile)

@@ -15,6 +15,7 @@ end
 local function genPOSTags(sens, rnn, id2word, vocabSize, allLabels, fileName)
    local file = io.open(fileName,"w")
    for i = 1,#sens do
+      print(i)
       local sentence = sens[i]
       for j = 1,#sentence do 
 	 local input = featIO.getOneHotFeature(sentence[j].wordId,vocabSize)
@@ -23,6 +24,7 @@ local function genPOSTags(sens, rnn, id2word, vocabSize, allLabels, fileName)
 	 local predLabel, predLabelId = netPred(output, allLabels)
 	 file:write(id2word[sentence[j].wordId] .. '_' .. predLabel .. ' ')
       end
+      rnn:forget()
       file:write('\n')
    end
    file:close()

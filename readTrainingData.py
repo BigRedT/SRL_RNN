@@ -1,4 +1,5 @@
 import os
+import sys
 
 class TaggedWord:
     def __init__(self, taggedString):
@@ -99,8 +100,8 @@ class featSequencer():
         file.write('}\n')
         
 if __name__=="__main__":
-    inputFile = '/home/tgupta6/pos_tag_data/train.txt'
-    parsedSensFile = '/home/tgupta6/pos_tag_data/sentences.txt'
+    #inputFile = '/home/tgupta6/pos_tag_data/train.txt'
+    inputFile = sys.argv[1]	
     vocabularyFile = '/home/tgupta6/pos_tag_data/vocab.txt'
     labelsFile = '/home/tgupta6/pos_tag_data/labels.txt'
     featureFile = '/home/tgupta6/pos_tag_data/feat.txt'
@@ -110,13 +111,6 @@ if __name__=="__main__":
     # parse training data
     sens = readLabeledData(inputFile)
 
-    # write sentences to a file
-    sensFile = open(parsedSensFile,'w')
-    for sentence in sens:
-        for taggedWord in sentence:
-            sensFile.write(taggedWord.word + " ")
-        sensFile.write('\n')
-    sensFile.close()
     
     # Create vocabulary
     vocab, inv_vocab, freq, labels = createVocab(sens, FREQ_THRESH)
