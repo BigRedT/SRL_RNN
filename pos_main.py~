@@ -1,9 +1,0 @@
-import os
-import sys
-
-# Paths
-featureFile = "./pos_tag_data/feat.txt"
-vocabFile = "./pos_tag_data/vocab.txt"
-labelsFile = "./pos_tag_data/labels.txt"
-modelPath = "./rnnPOS.net"
-outputFile = "./train_pred.txt"
