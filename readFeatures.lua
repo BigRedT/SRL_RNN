@@ -3,40 +3,48 @@ local function readCompleteData(word_int_file, label_int_file, word_Embeddings_F
    id2word, word2id, vocabSize = readVocab(word_int_file)
    labels, numLabels = readLabels(label_int_file)
    word_embeddings = readEmbeddings(word_Embeddings_File)
-   sens = readFeatureFile(data_int_file)
+   sens = readIntFile(data_int_file, labels)
+   -- sens = readFeatureFile(data_int_file)
 
 return sens, id2word, word2id, vocabSize, labels, numLabels
 
 
-local function readIntData(fileName)
+local function readIntData(fileName, labels)
    local file = io.input(fileName, "r")
    if file == nil then
       print("Could not read file")
    end
 
    local sens = {}
-   local labels = {}
    local sens_id = 1
+   local PRED_int_id = tonumber(labels["PRED"])
+
    while true do
       local line = io.read("*line")
 
       if line == nil then break end
 
       if line == "{" then 
-    sentence = {}
-    word_id = 1
+         sentence = {}
+         word_id = 2
 
       elseif line == "}" then
-    sens[sens_id] = sentence
-    sens_id = sens_id + 1
+         sens[sens_id] = sentence
+         sens_id = sens_id + 1
+         -- Put a check for label == label["PRED"]. If yes, put word here as well as word_id = 1 location 
 
       else
-    local line_split = string.split(line," ")
-    local line_info = {}
-    line_info["wordId"] = tonumber(line_split[1])
-    line_info["label"] = tonumber(line_split[2])
-    sentence[word_id] = line_info
-    word_id = word_id + 1
+         local line_split = string.split(line," ")
+         local line_info = {}
+         local wid = tonumber(line_split[1])
+         local lid = tonumber(line_split[2])
+         line_info["wordId"] = wid
+         line_info["label"] = lid
+
+         sentence[word_id] = line_info
+         if lid == PRED_int_id then
+            sentence[1] = line_info
+         word_id = word_id + 1
       end
    end
    return sens
@@ -66,7 +74,7 @@ local function readFeatureFile(fileName)
    	 sens[sens_id] = sentence
    	 sens_id = sens_id + 1
 
-      -- Put a check for label == label["PRED"]. If yes, put word here as well as word_id = 1 location 
+      
       else
    	 local line_split = string.split(line," ")
    	 local line_info = {}
