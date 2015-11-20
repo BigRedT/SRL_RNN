@@ -1,4 +1,48 @@
 local P = {}
+local function readCompleteData(word_int_file, label_int_file, word_Embeddings_File, data_int_file)
+   id2word, word2id, vocabSize = readVocab(word_int_file)
+   labels, numLabels = readLabels(label_int_file)
+   word_embeddings = readEmbeddings(word_Embeddings_File)
+   sens = readFeatureFile(data_int_file)
+
+return sens, id2word, word2id, vocabSize, labels, numLabels
+
+
+local function readIntData(fileName)
+   local file = io.input(fileName, "r")
+   if file == nil then
+      print("Could not read file")
+   end
+
+   local sens = {}
+   local labels = {}
+   local sens_id = 1
+   while true do
+      local line = io.read("*line")
+
+      if line == nil then break end
+
+      if line == "{" then 
+    sentence = {}
+    word_id = 1
+
+      elseif line == "}" then
+    sens[sens_id] = sentence
+    sens_id = sens_id + 1
+
+      else
+    local line_split = string.split(line," ")
+    local line_info = {}
+    line_info["wordId"] = tonumber(line_split[1])
+    line_info["label"] = tonumber(line_split[2])
+    sentence[word_id] = line_info
+    word_id = word_id + 1
+      end
+   end
+   return sens
+end
+
+-- To append pred with each word, what we can do is start sentence from position 2. First pass through the sentence and find out the PRED using the label map and append at start of sentence.
 local function readFeatureFile(fileName)
    local file = io.input(fileName, "r")
    if file == nil then
@@ -14,20 +58,22 @@ local function readFeatureFile(fileName)
       if line == nil then break end
 
       if line == "{" then 
-	 sentence = {}
-	 word_id = 1
+   	 sentence = {}
+   	 word_id = 1
+       -- Here put word_id = 2
 
       elseif line == "}" then
-	 sens[sens_id] = sentence
-	 sens_id = sens_id + 1
+   	 sens[sens_id] = sentence
+   	 sens_id = sens_id + 1
 
+      -- Put a check for label == label["PRED"]. If yes, put word here as well as word_id = 1 location 
       else
-	 local line_split = string.split(line," ")
-	 local line_info = {}
-	 line_info["wordId"] = tonumber(line_split[1])
-	 line_info["label"] = tonumber(line_split[2])
-	 sentence[word_id] = line_info
-	 word_id = word_id + 1
+   	 local line_split = string.split(line," ")
+   	 local line_info = {}
+   	 line_info["wordId"] = tonumber(line_split[1])
+   	 line_info["label"] = tonumber(line_split[2])
+   	 sentence[word_id] = line_info
+   	 word_id = word_id + 1
       end
    end
    return sens
@@ -50,8 +96,9 @@ local function readVocab(fileName)
       
       local line_split = string.split(line," ")
       local word_id = tonumber(line_split[2])
-      id2word[word_id] = line_split[1]
-      word2id[line_split[2]] = word_id
+      local word = line_split[1]
+      id2word[word_id] = word
+      word2id[word] = word_id
       wordCount = wordCount + 1
    end
    local vocabSize = wordCount
@@ -79,6 +126,33 @@ local function readLabels(fileName)
    return labels, numLabels
 end
 
+local function readEmbeddings(fileName)
+   local file = io.input(fileName, "r")
+   if file == nil then
+      print("Could not read file")
+   end
+
+   local embedding_size = 300
+   local word_embeddings = {}
+
+   while true do
+      local line = io.read("*line")
+
+      if line == nil then break end
+      
+      local line_split = string.split(line," ")
+      word_int = line_split[1]
+      embedding = {}
+      -- Put loop from 2 to end of line, reading doubles and storing in embedding.   
+      -- Put check to see if length of embedding == embedding_size
+
+      -- After reading Embeddings
+      -- word_embeddings[word_int] = embedding
+      
+   end
+   return word_embeddings
+end
+
 -- Converts a wordId (0 based indexing) into a one hot feature vector
 local function getOneHotFeature(wordId, numWords)
    local feat = torch.zeros(1,numWords)
@@ -91,6 +165,9 @@ P.readFeatureFile = readFeatureFile
 P.readVocab = readVocab
 P.getOneHotFeature = getOneHotFeature
 P.readLabels = readLabels
+P.readCompleteData = readCompleteData
+P.readIntData = readIntData
+P.readEmbeddings = readEmbeddings
 -- local sens = readFeatureFile("/home/tgupta6/pos_tag_data/feat.txt")
 -- local vocab, vocabSize = readVocab("/home/tgupta6/pos_tag_data/vocab.txt")
 
