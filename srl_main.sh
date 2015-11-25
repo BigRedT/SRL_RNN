@@ -1,19 +1,40 @@
-trainIntFile="./srl_data/train_int.txt"
-devIntFile="./srl_data/dev_int.txt"
-testIntFile="./srl_data/test_int.txt"
+data_dir=$1
+output_dir=$2
+layer=$3
+hiddenFrac=$4
 
-trainFile="./srl_data/train.txt"
-devFile="./srl_data/dev.txt"
-testFile="./srl_data/test.txt"
+trainIntFile=$data_dir"/train_int.txt"
+devIntFile=$data_dir"/dev_int.txt"
+testIntFile=$data_dir"/test_int.txt"
 
-word_int_File="./srl_data/word_int_map.txt"
-label_int_File="./srl_data/label_int_map.txt"
-wordint_embeddings="./srl_data/wordint_embeddings.txt"
+trainFile=$data_dir"/train.txt"
+devFile=$data_dir"/dev.txt"
+testFile=$data_dir"/test.txt"
 
-modelPath="./trained_rnn_models/"$1
-bestModelPath="./trained_rnn_models/"$2
+word_int_File=$data_dir"/word_int_map.txt"
+label_int_File=$data_dir"/label_int_map.txt"
+wordint_embeddings=$data_dir"/wordint_embeddings.txt"
 
-predDevFile="./srl_output/"$3
-predTestFile="./srl_output/"$4
+modelsDir=$output_dir"/models"
 
-th trainRNN.lua $word_int_File $label_int_File $wordint_embeddings $trainIntFile $devIntFile $testIntFile $trainFile $devFile $testFile $modelPath $bestModelPath $predDevFile $predTestFile
+predTrainFilesDir=$output_dir"/predTrainFiles"
+predDevFilesDir=$output_dir"/predDevFiles"
+predTestFilesDir=$output_dir"/predTestFiles"
+
+if [ ! -d $modelsDir ]; then
+    mkdir $modelsDir
+fi
+
+if [ ! -d $predTrainFilesDir ]; then
+    mkdir $predTrainFilesDir
+fi
+
+if [ ! -d $predDevFilesDir ]; then
+    mkdir $predDevFilesDir
+fi
+
+if [ ! -d $predTestFilesDir ]; then
+    mkdir $predTestFilesDir
+fi
+
+th trainRNN.lua $word_int_File $label_int_File $wordint_embeddings $trainIntFile $devIntFile $testIntFile $trainFile $devFile $testFile $modelsDir $predTrainFilesDir $predDevFilesDir $predTestFilesDir $layer $hiddenFrac

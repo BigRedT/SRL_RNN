@@ -15,7 +15,6 @@ end
 local function genSRLTags(sens, rnn, id2word, vocabSize, allLabels, word_embeddings, fileName)
    local file = io.open(fileName,"w")
    for i = 1,#sens do
-      print(i)
       local sentence = sens[i]
       local predIntId = sentence[1]
       for j = 2,#sentence do 
