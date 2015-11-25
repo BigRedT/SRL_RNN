@@ -25,7 +25,7 @@ local dev_file = arg[8]
 local test_file = arg[9]
 
 local modelPath = arg[10]
-local outputFile = arg[11]
+local bestModelPath = arg[11]
 
 local predDevFile = arg[12]
 local predTestFile = arg[13]
@@ -34,9 +34,11 @@ local predTestFile = arg[13]
 -- local train_sens = featIO.readFeatureFile(featureFile)
 -- local id2word, word2id, vocabSize = featIO.readVocab(vocabFile) 
 -- local allLabels, numLabels = featIO.readLabels(labelsFile)
-local train_sens, id2word, word2id, vocabSize, allLabels, numLabels, word_embeddings  = featIO.CompleteData(word_int_file, label_int_file, wordint_embeddings_file, train_int_file)
-local dev_sens = featIO.readIntData(dev_int_file)
-local test_sens = featIO.readIntData(test_int_file)
+
+local train_sens, id2word, word2id, vocabSize, allLabels, label2id, numLabels, word_embeddings  = featIO.readCompleteData(word_int_file, label_int_file, wordInt_embeddings_file, train_int_file)
+
+local dev_sens = featIO.readIntData(dev_int_file, label2id)
+local test_sens = featIO.readIntData(test_int_file, label2id)
 
 
 -- print stats
@@ -46,13 +48,13 @@ print('Number of labels: ' ..numLabels)
 
 
 -- extract a example feature to determine inputSize
-local exFeat = featIO.getOneHotFeature(1,vocabSize)
-print('Feature size: ' ..tostring(exFeat:size(2)))
+local exFeat = 600
+print('Feature size: ' ..tostring(exFeat))
 
 
 -- Network parameters
 local numClasses = numLabels
-local inputSize = exFeat:size(2)
+local inputSize = exFeat
 local hiddenSize = 1000
 local rho = 100  -- maximum number of steps to BPTT
 local max_epochs = 10
@@ -76,30 +78,30 @@ criterion = criterion:cuda()
 
 
 -- Iterate over the training sentences
+numSentences = 2000; --#train_sens
 for epoch = 1,max_epochs  do
    print('Epoch: ' .. tostring(epoch))
    print('#Sequence: ')
    
-   for i = 1,#train_sens do 
+   for i = 1,numSentences do 
       
       if i % 1000 == 0 then
 	     print('    ' .. tostring(i))
       end
       
       local sentence = train_sens[i]
-      -- local label_int_index = sentence[1]
+      local predIntId = sentence[1]
       local updateCounter = 0
-      for j = 1,#sentence do 
-      -- for j = 2,#sentence do    To incorporate that first is PRED
-         local input = featIO.getOneHotFeature(sentence[j].wordId,vocabSize)
-         -- local input = featIO.getOneHotFeature(sentence[j].wordId,vocabSize) Get concatenation of PRED and word Embedding
-      	input = input:cuda()
-      	local target = torch.Tensor{tonumber(sentence[j].label)+1}
-      	target = target:cuda()
-      	local output = rnn:forward(input)
-      	local gradOutput = criterion:backward(output,target)
-      	rnn:backward(input,gradOutput)
-      	updateCounter = updateCounter + 1
+      for j = 2,#sentence do    --To incorporate that first is PRED
+         --local input = featIO.getOneHotFeature(sentence[j].wordId,vocabSize)
+	 local input = featIO.concatenate(word_embeddings[predIntId.wordId], word_embeddings[sentence[j].wordId])
+	 input = input:cuda()
+	 local target = torch.Tensor{tonumber(sentence[j].label)+1}
+	 target = target:cuda()
+	 local output = rnn:forward(input)
+	 local gradOutput = criterion:backward(output,target)
+	 rnn:backward(input,gradOutput)
+	 updateCounter = updateCounter + 1
       end
       rnn:backwardThroughTime()
       rnn:updateParameters(learning_rate)
@@ -107,5 +109,5 @@ for epoch = 1,max_epochs  do
       rnn:forget()
    end
    torch.save(modelPath,rnn)
-   netIO.genPOSTags(train_sens, rnn, id2word, vocabSize, allLabels, outputFile)
+   netIO.genSRLTags(dev_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predDevFile)
 end
