@@ -73,14 +73,21 @@ local inputLayer = nn.TemporalConvolution(inputSize,hiddenSize,1,1)
 local feedbackLayer = nn.Linear(hiddenSize,hiddenSize)
 local transferLayer = nn.Sigmoid()
 local rnn = nn.Sequential()
-rnn:add(nn.Recurrent(hiddenSize, inputLayer, feedbackLayer, transferLayer, rho))
-rnn:add(nn.Linear(hiddenSize,numClasses))
-rnn:add(nn.LogSoftMax())
+for layer = 1,numLayers do
+   if layer==1 then
+      convLayer = nn.TemporalConvolution(inputSize,hiddenSize,1,1)
+   else
+      convLayer = nn.TemporalConvolution(hiddenSize,hiddenSize,1,1)
+   end
+   rnn:add(nn.Sequencer(nn.Recurrent(hiddenSize, convLayer, feedbackLayer, transferLayer, rho)))
+end
+rnn:add(nn.Sequencer(nn.Linear(hiddenSize,numClasses)))
+rnn:add(nn.Sequencer(nn.LogSoftMax()))
 rnn = rnn:cuda()
 
 
 -- Define criterion / loss function
-local criterion = nn.ClassNLLCriterion()
+local criterion = nn.SequencerCriterion(nn.ClassNLLCriterion())
 criterion = criterion:cuda()
 
 
@@ -100,18 +107,20 @@ for epoch = 1,max_epochs  do
       local sentence = train_sens[i]
       local predIntId = sentence[1]
       local updateCounter = 0
-      for j = 2,#sentence do    --To incorporate that first is PRED
-         --local input = featIO.getOneHotFeature(sentence[j].wordId,vocabSize)
-	 local input = featIO.concatenate(word_embeddings[predIntId.wordId], word_embeddings[sentence[j].wordId])
+      local inputs, targets = {},{}
+
+      for j = 2,#sentence do 
+         local input = featIO.concatenate(word_embeddings[predIntId.wordId], word_embeddings[sentence[j].wordId])
 	 input = input:cuda()
+	 table.insert(inputs,input)
 	 local target = torch.Tensor{tonumber(sentence[j].label)+1}
 	 target = target:cuda()
-	 local output = rnn:forward(input)
-	 local gradOutput = criterion:backward(output,target)
-	 rnn:backward(input,gradOutput)
-	 updateCounter = updateCounter + 1
+	 table.insert(targets,target)
       end
-      rnn:backwardThroughTime()
+
+      local outputs = rnn:forward(inputs)
+      local gradOutputs = criterion:backward(outputs,targets)
+      rnn:backward(inputs,gradOutputs)
       rnn:updateParameters(learning_rate)
       rnn:zeroGradParameters()
       rnn:forget()
@@ -128,7 +137,7 @@ for epoch = 1,max_epochs  do
    -- print('Predicting SRL arguments for training data ..')
    -- netIO.genSRLTags(train_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predTrainFile)
    print('Predicting SRL arguments for dev data ..')
-   netIO.genSRLTags(dev_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predDevFile)
+   netIO.genSequencerSRLTags(dev_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predDevFile)
    print('Predicting SRL arguments for test data ..')
-   netIO.genSRLTags(test_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predTestFile)
+   netIO.genSequencerSRLTags(test_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predTestFile)
 end

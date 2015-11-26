@@ -11,7 +11,7 @@ if [ ! -d $output_dir ]; then
     mkdir $output_dir
 fi
 
-layers=(1 2 3)
+layers=(2 3)
 hiddenFracs=(0.5)
 
 for layer in ${layers[*]}

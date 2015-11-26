@@ -37,4 +37,4 @@ if [ ! -d $predTestFilesDir ]; then
     mkdir $predTestFilesDir
 fi
 
-th trainRNN.lua $word_int_File $label_int_File $wordint_embeddings $trainIntFile $devIntFile $testIntFile $trainFile $devFile $testFile $modelsDir $predTrainFilesDir $predDevFilesDir $predTestFilesDir $layer $hiddenFrac
+th trainStackedRNN.lua $word_int_File $label_int_File $wordint_embeddings $trainIntFile $devIntFile $testIntFile $trainFile $devFile $testFile $modelsDir $predTrainFilesDir $predDevFilesDir $predTestFilesDir $layer $hiddenFrac
