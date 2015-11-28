@@ -6,7 +6,7 @@ from operator import itemgetter
 # A class for evaluating POS-tagged data
 class Eval:
     def __init__(self, goldFile, testFile):
-        print "Evaluation Script for computing precision and recall"
+        #print "Evaluation Script for computing precision and recall"
         self.goldTags = self.readLabeledData(goldFile)
         self.testTags = self.readLabeledData(testFile)
         self.tags = self.learnTags()
@@ -113,18 +113,21 @@ if __name__ == "__main__":
         test = sys.argv[2]
         eval = Eval(gold, test)
         # Calculate recall and precision
-        line = "Arguments" + "\t" + "\t" +"Precision" + "    " + "Recall" + "\t     " + "F"
-        print >>file, line.rstrip()  
-        for tag in eval.tags:
-            precision = eval.getPrecision(tag)
-            recall = eval.getRecall(tag)
-            F = 2*precision*recall/(precision + recall)
-            line = colform(tag,7) + "\t" + "\t" +"\t" + str(round(precision,4)) + "\t     " + str(round(recall,4)) + "\t     " + str(round(F,4))
-            print >>file, line.rstrip()
+        #line = "Arguments" + "\t" + "\t" +"Precision" + "    " + "Recall" + "\t     " + "F"
+        #print >>file, line.rstrip()  
+        #for tag in eval.tags:
+        #    precision = eval.getPrecision(tag)
+        #    recall = eval.getRecall(tag)
+        #    F = 2*precision*recall/(precision + recall)
+        #    line = colform(tag,7) + "\t" + "\t" +"\t" + str(round(precision,4)) + "\t     " + str(round(recall,4)) + "\t     " + str(round(F,4))
+        #    print >>file, line.rstrip()
         precision = eval.getTotalPrecision()
         recall = eval.getTotalRecall()
         F = 2*precision*recall/(precision + recall)
-        line = colform("total",7) + "\t" + "\t" +"\t" + str(round(precision,4)) + "\t     " + str(round(recall,4)) + "\t     " + str(round(F,4))
-        print >>file, line.rstrip()
+        print "precision : ", precision
+	print "recall  : ", recall
+	print "F1 : ", F
+	#line = colform("total",7) + "\t" + "\t" +"\t" + str(round(precision,4)) + "\t     " + str(round(recall,4)) + "\t     " + str(round(F,4))
+        #print >>file, line.rstrip()
      
             
