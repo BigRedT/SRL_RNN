@@ -2,6 +2,8 @@ import evaluation_SRL as E
 import sys
 from os import walk
 
+# USAGE : python evaluation_token.py srl_data/dev.txt srl_data/test.txt rnn_output_dir/layers_2_hiddenFrac_2/
+
 def getPR(gold, test):
         eval = E.Eval(gold, test)
         precision = eval.getTotalPrecision()
