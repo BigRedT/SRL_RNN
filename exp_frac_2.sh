@@ -1,7 +1,7 @@
 # ./srl_main.sh testModel.net bestTestModel.net testPred.txt testTest.txt
 
 data_dir="./srl_data"
-output_dir="./rnn_output_dir"
+output_dir="./relu_layer_1_lr_001"
 
 if [ ! -d $data_dir ]; then
     echo "Data directory not found: " $data_dir
@@ -11,7 +11,7 @@ if [ ! -d $output_dir ]; then
     mkdir $output_dir
 fi
 
-layers=(2 3)
+layers=(1)
 hiddenFracs=(2)
 
 for layer in ${layers[*]}

@@ -54,7 +54,7 @@ print('Number of labels: ' ..numLabels)
 
 
 -- extract a example feature to determine inputSize
-local exFeat = 600
+local exFeat = 300
 print('Feature size: ' ..tostring(exFeat))
 
 print('Creating recurrent network ..')
@@ -63,7 +63,7 @@ local numClasses = numLabels
 local inputSize = exFeat
 local hiddenSize = exFeat*hiddenFrac
 print('Hidden layer size: ' .. tostring(hiddenSize))
-local rho = 5  -- maximum number of steps to BPTT
+local rho = 100  -- maximum number of steps to BPTT
 local max_epochs = 10
 local learning_rate = 0.001
 
@@ -71,24 +71,16 @@ local learning_rate = 0.001
 -- Define recurrent network architecture
 local inputLayer = nn.TemporalConvolution(inputSize,hiddenSize,1,1)
 local feedbackLayer = nn.Linear(hiddenSize,hiddenSize)
---local transferLayer = nn.Sigmoid()
 local transferLayer = nn.ReLU()
 local rnn = nn.Sequential()
-for layer = 1,numLayers do
-   if layer==1 then
-      convLayer = nn.TemporalConvolution(inputSize,hiddenSize,1,1)
-   else
-      convLayer = nn.TemporalConvolution(hiddenSize,hiddenSize,1,1)
-   end
-   rnn:add(nn.Sequencer(nn.Recurrent(hiddenSize, convLayer, feedbackLayer, transferLayer, rho)))
-end
-rnn:add(nn.Sequencer(nn.Linear(hiddenSize,numClasses)))
-rnn:add(nn.Sequencer(nn.LogSoftMax()))
+rnn:add(nn.Recurrent(hiddenSize, inputLayer, feedbackLayer, transferLayer, rho))
+rnn:add(nn.Linear(hiddenSize,numClasses))
+rnn:add(nn.LogSoftMax())
 rnn = rnn:cuda()
 
 
 -- Define criterion / loss function
-local criterion = nn.SequencerCriterion(nn.ClassNLLCriterion())
+local criterion = nn.ClassNLLCriterion()
 criterion = criterion:cuda()
 
 
@@ -106,22 +98,22 @@ for epoch = 1,max_epochs  do
       end
       
       local sentence = train_sens[i]
-      local predIntId = sentence[1]
+      --local predIntId = sentence[1]
       local updateCounter = 0
-      local inputs, targets = {},{}
-
-      for j = 2,#sentence do 
-         local input = featIO.concatenate(word_embeddings[predIntId.wordId], word_embeddings[sentence[j].wordId])
+      for j = 1,#sentence do    --To incorporate that first is PRED
+         --if allLabels[tonumber(sentence[j].label)] ~= 'PRED' then
+	 --local input = featIO.concatenate(word_embeddings[predIntId.wordId], word_embeddings[sentence[j].wordId]) 
+	 local input = word_embeddings[sentence[j].wordId]
 	 input = input:cuda()
-	 table.insert(inputs,input)
 	 local target = torch.Tensor{tonumber(sentence[j].label)+1}
 	 target = target:cuda()
-	 table.insert(targets,target)
+	 local output = rnn:forward(input)
+	 local gradOutput = criterion:backward(output,target)
+	 rnn:backward(input,gradOutput)
+	 updateCounter = updateCounter + 1
+	 --end
       end
-
-      local outputs = rnn:forward(inputs)
-      local gradOutputs = criterion:backward(outputs,targets)
-      rnn:backward(inputs,gradOutputs)
+      rnn:backwardThroughTime()
       rnn:updateParameters(learning_rate)
       rnn:zeroGradParameters()
       rnn:forget()
@@ -137,8 +129,8 @@ for epoch = 1,max_epochs  do
 
    -- print('Predicting SRL arguments for training data ..')
    -- netIO.genSRLTags(train_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predTrainFile)
-   print('Predicting SRL arguments for dev data ..')
-   netIO.genSequencerSRLTags(dev_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predDevFile)
-   print('Predicting SRL arguments for test data ..')
-   netIO.genSequencerSRLTags(test_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predTestFile)
+   print('Predicting POS arguments for dev data ..')
+   netIO.genPOSTags(dev_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predDevFile)
+   print('Predicting POS arguments for test data ..')
+   netIO.genPOSTags(test_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predTestFile)
 end

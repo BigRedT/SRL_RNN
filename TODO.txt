@@ -1,0 +1,5 @@
+1. Replace Sigmoid with ReLU
+2. Reduce learning rate
+3. Try batches
+4. Different Network Types - Bi-RNN, LSTM, Bi-LSTM
+5. 

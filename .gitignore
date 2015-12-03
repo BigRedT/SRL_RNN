@@ -1,6 +1,13 @@
-POS
+POS/single_rnn_output
+POS/stacked_rnn_output
+POS/posdata
+relu_layer_1_lr_001
+relu_lower_lr
+stacked_rnn_debug
 pos_tag_data
 srl_data
 srl_output
 rnn_trained_models
 rnn_output_dir
+*~
+*.pyc

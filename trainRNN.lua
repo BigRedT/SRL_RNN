@@ -65,13 +65,13 @@ local hiddenSize = exFeat*hiddenFrac
 print('Hidden layer size: ' .. tostring(hiddenSize))
 local rho = 100  -- maximum number of steps to BPTT
 local max_epochs = 10
-local learning_rate = 0.01
+local learning_rate = 0.001
 
 
 -- Define recurrent network architecture
 local inputLayer = nn.TemporalConvolution(inputSize,hiddenSize,1,1)
 local feedbackLayer = nn.Linear(hiddenSize,hiddenSize)
-local transferLayer = nn.Sigmoid()
+local transferLayer = nn.ReLU()
 local rnn = nn.Sequential()
 rnn:add(nn.Recurrent(hiddenSize, inputLayer, feedbackLayer, transferLayer, rho))
 rnn:add(nn.Linear(hiddenSize,numClasses))
@@ -102,14 +102,16 @@ for epoch = 1,max_epochs  do
       local updateCounter = 0
       for j = 2,#sentence do    --To incorporate that first is PRED
          --local input = featIO.getOneHotFeature(sentence[j].wordId,vocabSize)
-	 local input = featIO.concatenate(word_embeddings[predIntId.wordId], word_embeddings[sentence[j].wordId])
-	 input = input:cuda()
-	 local target = torch.Tensor{tonumber(sentence[j].label)+1}
-	 target = target:cuda()
-	 local output = rnn:forward(input)
-	 local gradOutput = criterion:backward(output,target)
-	 rnn:backward(input,gradOutput)
-	 updateCounter = updateCounter + 1
+	 if allLabels[tonumber(sentence[j].label)] ~= 'PRED' then
+	    local input = featIO.concatenate(word_embeddings[predIntId.wordId], word_embeddings[sentence[j].wordId])
+	    input = input:cuda()
+	    local target = torch.Tensor{tonumber(sentence[j].label)+1}
+	    target = target:cuda()
+	    local output = rnn:forward(input)
+	    local gradOutput = criterion:backward(output,target)
+	    rnn:backward(input,gradOutput)
+	    updateCounter = updateCounter + 1
+	 end
       end
       rnn:backwardThroughTime()
       rnn:updateParameters(learning_rate)

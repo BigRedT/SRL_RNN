@@ -54,7 +54,7 @@ print('Number of labels: ' ..numLabels)
 
 
 -- extract a example feature to determine inputSize
-local exFeat = 600
+local exFeat = 300
 print('Feature size: ' ..tostring(exFeat))
 
 print('Creating recurrent network ..')
@@ -106,12 +106,13 @@ for epoch = 1,max_epochs  do
       end
       
       local sentence = train_sens[i]
-      local predIntId = sentence[1]
+      --local predIntId = sentence[1]
       local updateCounter = 0
       local inputs, targets = {},{}
 
-      for j = 2,#sentence do 
-         local input = featIO.concatenate(word_embeddings[predIntId.wordId], word_embeddings[sentence[j].wordId])
+      for j = 1,#sentence do 
+         --local input = featIO.concatenate(word_embeddings[predIntId.wordId], word_embeddings[sentence[j].wordId])
+	 local input = word_embeddings[sentence[j].wordId]
 	 input = input:cuda()
 	 table.insert(inputs,input)
 	 local target = torch.Tensor{tonumber(sentence[j].label)+1}
@@ -138,7 +139,7 @@ for epoch = 1,max_epochs  do
    -- print('Predicting SRL arguments for training data ..')
    -- netIO.genSRLTags(train_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predTrainFile)
    print('Predicting SRL arguments for dev data ..')
-   netIO.genSequencerSRLTags(dev_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predDevFile)
+   netIO.genSequencerPOSTags(dev_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predDevFile)
    print('Predicting SRL arguments for test data ..')
-   netIO.genSequencerSRLTags(test_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predTestFile)
+   netIO.genSequencerPOSTags(test_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predTestFile)
 end
