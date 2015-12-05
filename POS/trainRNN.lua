@@ -71,7 +71,8 @@ local learning_rate = 0.001
 -- Define recurrent network architecture
 local inputLayer = nn.TemporalConvolution(inputSize,hiddenSize,1,1)
 local feedbackLayer = nn.Linear(hiddenSize,hiddenSize)
-local transferLayer = nn.ReLU()
+-- local transferLayer = nn.ReLU()
+local transferLayer = nn.Sigmoid()
 local rnn = nn.Sequential()
 rnn:add(nn.Recurrent(hiddenSize, inputLayer, feedbackLayer, transferLayer, rho))
 rnn:add(nn.Linear(hiddenSize,numClasses))

@@ -36,7 +36,7 @@ local hiddenFrac = arg[15]
 -- local train_sens = featIO.readFeatureFile(featureFile)
 -- local id2word, word2id, vocabSize = featIO.readVocab(vocabFile) 
 -- local allLabels, numLabels = featIO.readLabels(labelsFile)
-
+print('RUNNING STACKED NET ..')
 print('Reading training data ..')
 local train_sens, id2word, word2id, vocabSize, allLabels, label2id, numLabels, word_embeddings  = featIO.readCompleteData(word_int_file, label_int_file, wordInt_embeddings_file, train_int_file)
 print('Reading dev data ..')
@@ -57,7 +57,7 @@ print('Number of labels: ' ..numLabels)
 local exFeat = 300
 print('Feature size: ' ..tostring(exFeat))
 
-print('Creating recurrent network ..')
+print('Creating STACKED recurrent network ..')
 -- Network parameters
 local numClasses = numLabels
 local inputSize = exFeat
@@ -71,8 +71,8 @@ local learning_rate = 0.001
 -- Define recurrent network architecture
 local inputLayer = nn.TemporalConvolution(inputSize,hiddenSize,1,1)
 local feedbackLayer = nn.Linear(hiddenSize,hiddenSize)
---local transferLayer = nn.Sigmoid()
-local transferLayer = nn.ReLU()
+local transferLayer = nn.Sigmoid()
+--local transferLayer = nn.ReLU()
 local rnn = nn.Sequential()
 for layer = 1,numLayers do
    if layer==1 then
@@ -138,8 +138,8 @@ for epoch = 1,max_epochs  do
 
    -- print('Predicting SRL arguments for training data ..')
    -- netIO.genSRLTags(train_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predTrainFile)
-   print('Predicting SRL arguments for dev data ..')
+   print('Predicting POS arguments for dev data ..')
    netIO.genSequencerPOSTags(dev_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predDevFile)
-   print('Predicting SRL arguments for test data ..')
+   print('Predicting POS arguments for test data ..')
    netIO.genSequencerPOSTags(test_sens, rnn, id2word, vocabSize, allLabels, word_embeddings, predTestFile)
 end

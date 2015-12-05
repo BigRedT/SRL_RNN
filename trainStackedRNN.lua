@@ -57,7 +57,7 @@ print('Number of labels: ' ..numLabels)
 local exFeat = 600
 print('Feature size: ' ..tostring(exFeat))
 
-print('Creating recurrent network ..')
+print('Creating Stacked Recurrent network ..')
 -- Network parameters
 local numClasses = numLabels
 local inputSize = exFeat
@@ -71,8 +71,8 @@ local learning_rate = 0.001
 -- Define recurrent network architecture
 local inputLayer = nn.TemporalConvolution(inputSize,hiddenSize,1,1)
 local feedbackLayer = nn.Linear(hiddenSize,hiddenSize)
---local transferLayer = nn.Sigmoid()
-local transferLayer = nn.ReLU()
+local transferLayer = nn.Sigmoid()
+--local transferLayer = nn.ReLU()
 local rnn = nn.Sequential()
 for layer = 1,numLayers do
    if layer==1 then
@@ -110,16 +110,21 @@ for epoch = 1,max_epochs  do
       local updateCounter = 0
       local inputs, targets = {},{}
 
-      for j = 2,#sentence do 
-         local input = featIO.concatenate(word_embeddings[predIntId.wordId], word_embeddings[sentence[j].wordId])
-	 input = input:cuda()
-	 table.insert(inputs,input)
-	 local target = torch.Tensor{tonumber(sentence[j].label)+1}
-	 target = target:cuda()
-	 table.insert(targets,target)
+      for j = 2,#sentence do
+         if allLabels[tonumber(sentence[j].label)] ~= 'PRED' then 
+         	local input = featIO.concatenate(word_embeddings[predIntId.wordId], word_embeddings[sentence[j].wordId])
+	 	input = input:cuda()
+	 	table.insert(inputs,input)
+	 	local target = torch.Tensor{tonumber(sentence[j].label)+1}
+	 	target = target:cuda()
+	 	table.insert(targets,target)
+         end
       end
-
+      
       local outputs = rnn:forward(inputs)
+      -- print(#sentence - 1)
+      -- print(#outputs)
+      -- print(outputs[1]:size())
       local gradOutputs = criterion:backward(outputs,targets)
       rnn:backward(inputs,gradOutputs)
       rnn:updateParameters(learning_rate)

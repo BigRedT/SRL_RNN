@@ -9,5 +9,7 @@ srl_data
 srl_output
 rnn_trained_models
 rnn_output_dir
+stacked_rnn_output
+single_rnn_output
 *~
 *.pyc

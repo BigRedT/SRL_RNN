@@ -40,7 +40,6 @@ def getAllPR(goldD, goldT, predDir):
 	devFiles = getFiles(predDevDir)
 	testFiles = getFiles(predTestDir)
 
-	 
 	
 	if(len(devFiles) != len(testFiles)):
 		sys.exit()

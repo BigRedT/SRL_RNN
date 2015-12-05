@@ -2,4 +2,18 @@
 2. Reduce learning rate
 3. Try batches
 4. Different Network Types - Bi-RNN, LSTM, Bi-LSTM
-5. 
+
+
+
+UPDATES
+POS - Layer 1, 2 and 3 - RELU - 94%
+POS - Layer 1 - Sigmoid - 92%
+POS - Layer 2,3 - Sigmoid - To Be RUN
+
+
+SRL - Layer 1,2,3 - Sigmoid - Running
+ 
+
+
+
+ 

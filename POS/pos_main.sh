@@ -3,6 +3,7 @@ output_dir=$2
 layer=$3
 hiddenFrac=$4
 net_type=$5
+echo $net_type
 
 trainIntFile=$data_dir"/train_int.txt"
 devIntFile=$data_dir"/dev_int.txt"
@@ -40,10 +41,12 @@ fi
 
 
 
-if [ net_type="single" ]; then
+if test "$net_type" = "single"
+then
     th trainRNN.lua $word_int_File $label_int_File $wordint_embeddings $trainIntFile $devIntFile $testIntFile $trainFile $devFile $testFile $modelsDir $predTrainFilesDir $predDevFilesDir $predTestFilesDir $layer $hiddenFrac
 
-elif [ net_type="stacked" ]; then
+elif test "$net_type" = "stacked"
+then
     th trainStackedRNN.lua $word_int_File $label_int_File $wordint_embeddings $trainIntFile $devIntFile $testIntFile $trainFile $devFile $testFile $modelsDir $predTrainFilesDir $predDevFilesDir $predTestFilesDir $layer $hiddenFrac
 
 else 

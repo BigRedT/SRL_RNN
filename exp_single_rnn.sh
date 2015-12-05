@@ -1,7 +1,7 @@
 # ./srl_main.sh testModel.net bestTestModel.net testPred.txt testTest.txt
 
 data_dir="./srl_data"
-output_dir="./relu_layer_1_lr_001"
+output_dir="./single_rnn_output"
 
 if [ ! -d $data_dir ]; then
     echo "Data directory not found: " $data_dir
@@ -27,7 +27,7 @@ do
 	fi
 
 	# Train and test RNN
-	./srl_main.sh $data_dir $output_sub_dir $layer $hiddenFrac
+	./srl_main.sh $data_dir $output_sub_dir $layer $hiddenFrac "single"
 
     done
 done

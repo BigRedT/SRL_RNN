@@ -44,7 +44,6 @@ local dev_sens = featIO.readIntData(dev_int_file, label2id)
 print('Reading test data ..')
 local test_sens = featIO.readIntData(test_int_file, label2id)
 
-
 -- print stats
 print('Number of training sequences: ' .. #train_sens)
 print('Number of dev sequences: ' .. #dev_sens)
@@ -71,7 +70,8 @@ local learning_rate = 0.001
 -- Define recurrent network architecture
 local inputLayer = nn.TemporalConvolution(inputSize,hiddenSize,1,1)
 local feedbackLayer = nn.Linear(hiddenSize,hiddenSize)
-local transferLayer = nn.ReLU()
+-- local transferLayer = nn.ReLU()
+local transferLayer = nn.Sigmoid()
 local rnn = nn.Sequential()
 rnn:add(nn.Recurrent(hiddenSize, inputLayer, feedbackLayer, transferLayer, rho))
 rnn:add(nn.Linear(hiddenSize,numClasses))
@@ -87,6 +87,7 @@ criterion = criterion:cuda()
 -- Iterate over the training sentences
 print('Training network ..')
 numSentences = #train_sens
+-- numSentences = 1
 for epoch = 1,max_epochs  do
    print('Epoch: ' .. tostring(epoch))
    print('#Sequence: ')

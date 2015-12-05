@@ -9,10 +9,18 @@ local featIO = require('readFeatures')
 local function netPred(logits, labels)
    local maxLogit, id = torch.max(logits,2)
    id = id - 1
-   if labels[id[{1,1}]]=='PRED' then
-      return 'NIL', -1
-   end
-   return labels[id[{1,1}]], id
+   local label = ''
+   local labelID = -1
+   l = labels[id[{1,1}]]	
+   if l=='PRED' then
+      label = 'NIL'	
+   elseif l~=nil  then
+      label = labels[id[{1,1}]]
+      labelID = id
+   else
+      label = 'DUMLAB'
+   end   
+   return label, labelID
 end
 
 local function genSRLTags(sens, rnn, id2word, vocabSize, allLabels, word_embeddings, fileName)
@@ -48,10 +56,15 @@ local function genSequencerSRLTags(sens, rnn, id2word, vocabSize, allLabels, wor
 	 input = input:cuda()
 	 table.insert(inputs,input)
       end
+
       local outputs = rnn:forward(inputs)
       for j = 2,#sentence do
-	 local predLabel, predLabelId = netPred(outputs[j-1], allLabels)
-	 file:write(id2word[sentence[j].wordId] .. '_' .. predLabel .. ' ')
+	 if allLabels[tonumber(sentence[j].label)] ~= 'PRED' then
+	 	local predLabel, predLabelId = netPred(outputs[j-1], allLabels)
+	 	file:write(id2word[sentence[j].wordId] .. '_' .. predLabel .. ' ')
+	 else
+           	file:write(id2word[sentence[j].wordId] .. '_' .. 'PRED' .. ' ')
+	 end
       end
       rnn:forget()
       file:write('\n')
